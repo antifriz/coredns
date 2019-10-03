@@ -118,9 +118,16 @@ func (e *Etcd) loopNodes(kv []*mvccpb.KeyValue, nameParts []string, star bool, q
 	bx := make(map[msg.Service]struct{})
 Nodes:
 	for _, n := range kv {
+
+		s := string(n.Key)
+
+		keyParts := strings.Split(s, "/")
+
+		if len(keyParts) != len(nameParts)+1 {
+			continue Nodes
+		}
+
 		if star {
-			s := string(n.Key)
-			keyParts := strings.Split(s, "/")
 			for i, n := range nameParts {
 				if i > len(keyParts)-1 {
 					// name is longer than key
@@ -152,6 +159,9 @@ Nodes:
 		if shouldInclude(serv, qType) {
 			sx = append(sx, *serv)
 		}
+	}
+	if len(sx) == 0 {
+		return nil, errKeyNotFound
 	}
 	return sx, nil
 }
